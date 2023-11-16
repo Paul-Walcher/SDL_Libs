@@ -73,6 +73,7 @@ bool CircularHitbox::hits(Hitbox* o){
 											RectangularHitbox* other = dynamic_cast<RectangularHitbox*>(o);
 											return circle_hits_rect(this, other);
 										}
+										
 
 	}
 
