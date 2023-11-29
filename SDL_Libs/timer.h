@@ -12,13 +12,16 @@
 #include <vector>
 #include <cinttypes>
 #include <algorithm>
+#include <thread>
+#include <mutex>
 
+class Timer;
 //time gets all checked in milliseconds
 
 const int INFINITE_REPETITIONS = -1;//execute the function inifinite times
 const uint32_t STANDARD_CHECK_TIME = 1;//checks every time
 static void do_nothing(void*){}//does nothing
-
+static void run_process(Timer* time);
 
 /*
 *
@@ -50,6 +53,10 @@ private:
 	std::vector<callback_t*> callbacks;//all the callback functions
 
 	bool paused = false;
+	bool finished = false;
+
+	std::thread proc;
+	std::mutex lock;
 
 public:
 
@@ -74,15 +81,25 @@ public:
 	void reset_callbacks();//resets all callbacks and syncs them
 	void stop();
 
+	bool run_inner_process();
+
 	const bool is_paused() const;
 
 
 };
 
+static void run_process(Timer* time){
+	bool running = true;
+	while(running){
+		running = time->run_inner_process();
+	}
+}
+
 Timer::Timer(){
 	timer_birthday = SDL_GetTicks();
 	last_stop = timer_birthday;
 	check_time = STANDARD_CHECK_TIME;
+	proc = std::thread(run_process, this);
 }
 
 Timer::Timer(std::vector<callback_t*>& callbacks, uint32_t check_time){
@@ -92,12 +109,30 @@ Timer::Timer(std::vector<callback_t*>& callbacks, uint32_t check_time){
 	this->check_time = check_time;
 	this->callbacks = callbacks;
 
+	proc = std::thread(run_process, this);
+
+}
+
+bool Timer::run_inner_process(){
+
+	lock.lock();
+	if (finished){
+		lock.unlock();
+		return false;
+	} 
+	if (!paused) tick();
+	lock.unlock();
+	return true;
+
 }
 
 Timer::~Timer(){
 
 	for(callback_t* ct : callbacks) delete ct;
-
+	lock.lock();
+	finished = true;
+	lock.unlock();
+	proc.join();
 }
 
 const uint32_t Timer::get_time_elapsed() const{
@@ -168,14 +203,18 @@ void Timer::tick(){// executes the function
 }
 
 void Timer::pause(){
+	lock.lock();
 	paused = true;
+	lock.unlock();
 	uint32_t reset_time = SDL_GetTicks();
 	for(callback_t* ct : callbacks){
 		ct->last_time_checked = reset_time;
 	}
 }
 void Timer::start(){
+	lock.lock();
 	paused = false;
+	lock.unlock();
 }
 void Timer::reset(){
 

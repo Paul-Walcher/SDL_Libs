@@ -32,8 +32,8 @@ static int bufferpointer = 0;
 uint8_t* record(int milliseconds, int id=-1, SDL_AudioSpec* spec = nullptr);
 void playback(uint8_t* data, int milliseconds, int id=-1, SDL_AudioSpec* spec = nullptr);
 
-void recording_callback(void*, uint8_t*, int);
-void playback_callback(void*, uint8_t*, int);
+static void recording_callback(void*, uint8_t*, int);
+static void playback_callback(void*, uint8_t*, int);
 
 
 uint8_t* record(int milliseconds, int id, SDL_AudioSpec* spec){
@@ -60,7 +60,7 @@ uint8_t* record(int milliseconds, int id, SDL_AudioSpec* spec){
 
 	used_spec = rcvd;
 
-	int bytesPerSample = rcvd.channels * ( SDL_AUDIO_BITSIZE( rcvd.format ) / 8 );
+	int bytesPerSample = rcvd.channels * (SDL_AUDIO_BITSIZE( rcvd.format ) / 8 );
     int bytesPerMillisecond = rcvd.freq * bytesPerSample / 1000;
 
     buffersize = (milliseconds+1) * bytesPerMillisecond;
@@ -117,7 +117,7 @@ void playback(uint8_t* data, int milliseconds, int id, SDL_AudioSpec* spec){
 
 }
 
-void recording_callback(void* udata, uint8_t* stream, int len){
+static void recording_callback(void* udata, uint8_t* stream, int len){
 
 	memcpy(&used_data[bufferpointer], stream, len);
 	bufferpointer += len;
@@ -129,7 +129,7 @@ void recording_callback(void* udata, uint8_t* stream, int len){
 	}
 
 }
-void playback_callback(void* udata, uint8_t* stream, int len){
+static void playback_callback(void* udata, uint8_t* stream, int len){
 
 
 	memcpy(stream, &used_data[bufferpointer], len);

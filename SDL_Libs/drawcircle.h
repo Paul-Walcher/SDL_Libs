@@ -22,11 +22,11 @@ void SDL_RenderDrawCircle(SDL_Renderer* renderer, int x, int y, int r, bool fill
 	for(int i = -r; i <= r; i++){
 		for(int j = -r; j <= r; j++){
 
-			if (static_cast<int>(sqrt(i*i + j*j)) <= r) {
+			double dist = sqrt(i*i + j*j);
+			if (static_cast<int>(dist) <= r) {
 				if (filled) SDL_RenderDrawPoint(renderer, x+i, y+j);
 				else {
-					double line = sqrt(i*i + j*j);
-					if (std::abs(line-static_cast<double>(r)) <= static_cast<double>(thickness)) SDL_RenderDrawPoint(renderer, x+i, y+j);
+					if (std::abs(dist-static_cast<double>(r)) <= static_cast<double>(thickness)) SDL_RenderDrawPoint(renderer, x+i, y+j);
 				}
 			}
 

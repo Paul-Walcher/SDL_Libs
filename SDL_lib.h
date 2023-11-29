@@ -13,7 +13,7 @@
 #include "SDL_Libs/texture.h"
 #include "SDL_Libs/timer.h"
 #include "SDL_Libs/recording.h"
-
+#include "SDL_Libs/window.h"
 
 
 #endif
