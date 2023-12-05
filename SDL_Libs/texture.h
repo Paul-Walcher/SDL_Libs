@@ -153,7 +153,6 @@ void Texture::load_image(const std::string& path, SDL_Window* w, bool reload){
 
 		if (w != nullptr){
 			pixelSurface = SDL_ConvertSurfaceFormat(s, SDL_GetWindowPixelFormat(w), 0);
-			
 		}
 
 

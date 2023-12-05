@@ -9,7 +9,7 @@ typedef void(*wrap_f_t)(void*);//primitive draw function
 
 class GameObject2D{//virtual class, should only be inherited
 
-private:
+protected:
 
 	double x=0, y=0;//double for correct positioning
 	double w=0, h=0;//for width and height
@@ -78,15 +78,20 @@ int GameObject2D::W() const {return static_cast<int>(w);}
 int GameObject2D::H() const {return static_cast<int>(h);}
 
 void GameObject2D::changeX(double x_){
+	update_hitboxes(x_ - x, 0);
 	x = x_;
+
 }
 void GameObject2D::changeY(double y_){
+	update_hitboxes(y_ - y, 0);
 	y = y_;
 }
 void GameObject2D::changeW(double w_){
+	update_hitboxes(0, w_-w);
 	w = w_;
 }
 void GameObject2D::changeH(double h_){
+	update_hitboxes(0, h_-h);
 	h = h_;
 }
 
@@ -181,6 +186,7 @@ void GameObject2D::update_hitboxes(int xdelta, int ydelta, int wdelta, int hdelt
 
 }
 
+
 void GameObject2D::draw(void* args) const{
 	draw_f(args);
 }
@@ -188,7 +194,6 @@ void GameObject2D::draw(void* args) const{
 void GameObject2D::set_draw_f(wrap_f_t f){
 	draw_f = f;
 }
-
 
 
 #endif
