@@ -43,6 +43,7 @@ public:
 
 	bool hits(GameObject2D*);//checks if it hits other game object
 	void draw(void*) const;
+	void set_draw_f(wrap_f_t f);
 
 	Hitbox* add_hitbox(int x, int y, int wr=0, int h=0, HitboxType ht = HitboxType::RECTANGULAR);//wr stands for width and radius, for both
 	void remove_hitbox(Hitbox*);
@@ -182,6 +183,10 @@ void GameObject2D::update_hitboxes(int xdelta, int ydelta, int wdelta, int hdelt
 
 void GameObject2D::draw(void* args) const{
 	draw_f(args);
+}
+
+void GameObject2D::set_draw_f(wrap_f_t f){
+	draw_f = f;
 }
 
 
