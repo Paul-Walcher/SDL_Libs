@@ -44,7 +44,7 @@ static std::vector<unsigned int> STANDARD_CHANGE_TIMES = {STANDARD_ANIMATION_SPE
 
 class Animation{
 
-private:
+protected:
 
 	Texture texture;
 
