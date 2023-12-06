@@ -4,12 +4,19 @@
 
 #ifdef _WIN32
 #include <SDL.h>
+#include <SDL_image.h>
+#include <SDL_ttf.h>
+#include <SDL_mixer.h>
 #undef main
 #else
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_mixer.h>
 #endif
 
 #include <cinttypes>
+#include <string>
 
 class Window{
 
@@ -32,14 +39,14 @@ public:
     bool isShown();
 
     Window();
-	Window(char*, int, int, int, int, uint32_t);
+	Window(std::string, int, int, int, int, uint32_t);
 	virtual ~Window();
 	void free();
 
 	void hide();
 	void show();
 	void focus();
-	void setCaption(const char*);
+	void setCaption(const std::string);
 
 	int X();
 	int Y();
@@ -51,7 +58,7 @@ public:
 };
 
 Window::Window(){} //undefined, just for specification
-Window::Window(char* caption, int x, int y, int w, int h, uint32_t flags){
+Window::Window(std::string caption, int x, int y, int w, int h, uint32_t flags){
 
 	this->x = x;
 	this->y = y;
@@ -59,13 +66,9 @@ Window::Window(char* caption, int x, int y, int w, int h, uint32_t flags){
 	this->h = h;
 
 	
-	if(caption = nullptr){
-		window = SDL_CreateWindow("", x, y, w, h, flags);
-	}
-	else{
-		window = SDL_CreateWindow(caption, x, y, w, h, flags);
-	}
 
+	window = SDL_CreateWindow(caption.c_str(), x, y, w, h, flags);
+	
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	ID = SDL_GetWindowID(window);
 
@@ -189,8 +192,8 @@ void Window::focus(){
 
 }
 
-void Window::setCaption(const char* cap){
-	SDL_SetWindowTitle(window, cap);
+void Window::setCaption(const std::string cap){
+	SDL_SetWindowTitle(window, cap.c_str());
 }
 
 

@@ -5,14 +5,20 @@
 #ifdef _WIN32
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_ttf.h>
+#include <SDL_mixer.h>
+#undef main
 #else
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_mixer.h>
 #endif
 
 #include <iostream>
 #include <string>
 #include <cinttypes>
+#include "window.h"
 
 const SDL_BlendMode STANDARD_BLENDMODE = SDL_BLENDMODE_BLEND;
 const SDL_RendererFlip STANDARD_FLIPTYPE = SDL_FLIP_NONE;
@@ -24,7 +30,7 @@ protected:
 	SDL_Texture* texture = nullptr;
 	SDL_Renderer* renderer = nullptr;
 	SDL_Surface* pixelSurface = nullptr;
-	SDL_Window* last_window = nullptr;
+	Window* window;
 
 	//cliprect is the rectangle that specifies what part of the image is shown
 	//renderrect specifies where the image will be rendered
@@ -45,20 +51,20 @@ public:
 	//for making a texture uninitialized
 	Texture();
 	//loads the texture preinitialized
-	Texture(const std::string&, SDL_Renderer*, SDL_Window* w = nullptr);
-	Texture(const std::string&, SDL_Renderer*, const SDL_Rect&, const SDL_Rect&, SDL_Window* w = nullptr);
+	Texture(const std::string&, Window* window_ptr);
+	Texture(const std::string&, Window* window_ptr, const SDL_Rect&, const SDL_Rect&);
 
 	virtual ~Texture();
 
 	//loads the texture new from the path to SDL_renderer
-	void load(const std::string&, SDL_Renderer*, SDL_Window* w = nullptr);
+	void load(const std::string&, Window* window_ptr);
 	void reload();
 
 	int get_width() const;
 	int get_height() const;
 
 	//for independent loading
-	void load_image(const std::string&, SDL_Window* w = nullptr, bool reload = false);
+	void load_image(const std::string&, bool reload = false);
 	//setting the two rects
 	void set_cliprect(const SDL_Rect&);
 	void set_renderrect(const SDL_Rect&);
@@ -66,7 +72,8 @@ public:
 	void unset_cliprect();
 	void unset_renderrect();
 	//if you change the renderer, this can be updated here
-	void set_renderer(SDL_Renderer*);
+	void set_window(Window* window_ptr);
+	Window const* get_window() const;
 	//modulating the image color
 	void modulate_color(const uint8_t, const uint8_t, const uint8_t);
 	//for blending
@@ -79,9 +86,9 @@ public:
 	void rotation_config(const SDL_Point&, const SDL_RendererFlip f=STANDARD_FLIPTYPE);
 	
 	uint32_t* get_pixels();
-	uint32_t get_pitch();
+	uint32_t get_pitch(); //width of the pixel line
 
-	void create_blank(int, int, SDL_Renderer*, SDL_TextureAccess acc = SDL_TEXTUREACCESS_TARGET);
+	void create_blank(int, int, SDL_TextureAccess acc = SDL_TEXTUREACCESS_TARGET);
 	void set_as_render_target(SDL_Renderer*);
 	void unset_as_render_target(SDL_Renderer* r);
 
@@ -94,26 +101,29 @@ public:
 Texture::Texture(){
 }
 
-Texture::Texture(const std::string& path, SDL_Renderer* r, SDL_Window* w){
+Texture::Texture(const std::string& path, Window* window_ptr){
 
-	this->renderer = r;
-	last_window = w;
-	load_image(path, w);
+	this->filepath = path;
+	this->window = window_ptr;
+	load_image(path);
 
 }
 
-Texture::Texture(const std::string& path, SDL_Renderer* r, const SDL_Rect& cr, const SDL_Rect& rr, SDL_Window* w){
+Texture::Texture(const std::string& path, Window* window_ptr, const SDL_Rect& cr, const SDL_Rect& rr){
 
-	this->renderer = r;
-	last_window = w;
-	load_image(path, w);
+	this->filepath = path;
+	this->window = window_ptr;
+	load_image(path);
 	set_cliprect(cr);
 	set_renderrect(rr);
 }
 
 Texture::~Texture(){
 
-	SDL_DestroyTexture(texture);
+
+
+	if (texture != nullptr) SDL_DestroyTexture(texture);
+	if(pixelSurface != nullptr) SDL_FreeSurface(pixelSurface);
 
 	if (cliprect != nullptr) delete cliprect;
 	if (renderrect != nullptr) delete renderrect;
@@ -121,10 +131,12 @@ Texture::~Texture(){
 
 }
 
-void Texture::load(const std::string& path, SDL_Renderer* r, SDL_Window* w){
-	this->renderer = r;
-	last_window = w;
-	load_image(path, w);
+void Texture::load(const std::string& path, Window* window_ptr){
+	
+
+	this->filepath = path;
+	this->window = window_ptr;
+	load_image(path);
 }
 
 int Texture::get_width() const {
@@ -135,8 +147,10 @@ int Texture::get_height() const{
 	return height;
 }
 
-void Texture::load_image(const std::string& path, SDL_Window* w, bool reload){
+void Texture::load_image(const std::string& path, bool reload){
 
+
+	if (window == nullptr) return;
 	if (texture != nullptr) SDL_DestroyTexture(texture);
 
 	SDL_Surface* s;
@@ -151,8 +165,8 @@ void Texture::load_image(const std::string& path, SDL_Window* w, bool reload){
 			exit(1);
 		}
 
-		if (w != nullptr){
-			pixelSurface = SDL_ConvertSurfaceFormat(s, SDL_GetWindowPixelFormat(w), 0);
+		if (window != nullptr){
+			pixelSurface = SDL_ConvertSurfaceFormat(s, SDL_GetWindowPixelFormat(window->window), 0);
 		}
 
 
@@ -165,10 +179,10 @@ void Texture::load_image(const std::string& path, SDL_Window* w, bool reload){
 	}
 
 	if (pixelSurface != nullptr){
-		texture = SDL_CreateTextureFromSurface(renderer, pixelSurface);
+		texture = SDL_CreateTextureFromSurface(window->renderer, pixelSurface);
 	}
 	else if(!reload){
-		texture = SDL_CreateTextureFromSurface(renderer, s);
+		texture = SDL_CreateTextureFromSurface(window->renderer, s);
 	}
 
 	if (!reload){
@@ -180,7 +194,7 @@ void Texture::load_image(const std::string& path, SDL_Window* w, bool reload){
 }
 
 void Texture::reload(){
-	load_image(filepath, last_window, true);
+	load_image(filepath, true);
 }
 
 void Texture::set_cliprect(const SDL_Rect& cr){
@@ -207,23 +221,28 @@ void Texture::unset_renderrect(){
 	if (renderrect != nullptr) delete renderrect;
 }
 
-void Texture::set_renderer(SDL_Renderer* r){
-	renderer = r;
+void Texture::set_window(Window* window_ptr){
+	this->window = window_ptr;
+	load_image(this->filepath);
+}
+
+Window const* Texture::get_window() const{
+	return window;
 }
 
 void Texture::draw() const {
-	if (renderer == nullptr || texture == nullptr) return;
-	SDL_RenderCopyEx(renderer, texture, cliprect, renderrect, angle, center, flipType);
+	if (window == nullptr || texture == nullptr) return;
+	SDL_RenderCopyEx(window->renderer, texture, cliprect, renderrect, angle, center, flipType);
 }
 
 void Texture::draw(int x, int y, int w, int h) const {
 
 
-	if (renderer == nullptr || texture == nullptr) return;
+	if (window == nullptr || texture == nullptr) return;
 	if( w == -1) w = width;
 	if (h == -1) h = height;
 	SDL_Rect r = {x, y, w, h};
-	SDL_RenderCopyEx(renderer, texture, cliprect, &r, angle, center, flipType);
+	SDL_RenderCopyEx(window->renderer, texture, cliprect, &r, angle, center, flipType);
 
 }
 
@@ -237,6 +256,7 @@ void Texture::set_blendmode(const SDL_BlendMode b){
 	this->blendmode = b;
 	if(this->texture != nullptr){
 		SDL_SetTextureBlendMode(texture, blendmode);
+		SDL_SetTextureAlphaMod(texture, alpha);
 	}
 }
 
@@ -247,6 +267,7 @@ const SDL_BlendMode Texture::get_blendmode() const{
 void Texture::set_alpha(const uint8_t a){
 	this->alpha = a;
 	if (this->texture != nullptr){
+		SDL_SetTextureBlendMode(texture, blendmode);
 		SDL_SetTextureAlphaMod(texture, alpha);
 	}
 }
@@ -282,24 +303,23 @@ uint32_t Texture::get_pitch(){
 	return back;
 }
 
-void Texture::create_blank(int width, int height, SDL_Renderer* r, SDL_TextureAccess access){
+void Texture::create_blank(int width, int height, SDL_TextureAccess access){
 
+	if(window == nullptr) return;
 	if (texture != nullptr) SDL_DestroyTexture(texture);
 	if (pixelSurface != nullptr) SDL_FreeSurface(pixelSurface);
 
-	texture = SDL_CreateTexture(r, SDL_PIXELFORMAT_RGBA8888, access, width, height);
-	renderer = r;
+	texture = SDL_CreateTexture(window->renderer, SDL_PIXELFORMAT_RGBA8888, access, width, height);
 
 }
 
 void Texture::set_as_render_target(SDL_Renderer* r){
+	if (texture == nullptr) return;
 	SDL_SetRenderTarget(r, texture);
-	renderer = r;
 }
 
 void Texture::unset_as_render_target(SDL_Renderer* r){
 	SDL_SetRenderTarget(r, nullptr);
-	renderer = r;
 }
 
 #endif

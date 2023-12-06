@@ -89,7 +89,6 @@ void deinit(){
 	SDL_DestroyWindow(window);
 	Mix_Quit();
 	IMG_Quit();
-	TTF_Quit();
 	SDL_Quit();
 
 }

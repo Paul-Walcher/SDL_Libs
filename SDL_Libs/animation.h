@@ -5,9 +5,14 @@
 #ifdef _WIN32
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_ttf.h>
+#include <SDL_mixer.h>
+#undef main
 #else
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_mixer.h>
 #endif
 
 #include <iostream>
@@ -48,7 +53,7 @@ private:
 
 	Texture texture;
 
-	SDL_Renderer* renderer = nullptr;
+	Window* window;
 	SDL_Rect* renderrect = nullptr;
 
 	uint8_t alpha = 0xff;
@@ -73,20 +78,19 @@ private:
 	double angle=0.0;
 	SDL_Point* center = nullptr;
 
-	SDL_Window* own_window = nullptr;
 
 	void load_texture();
 
 public:
 
 	Animation();
-	Animation(SDL_Window* w, SDL_Renderer* renderer, std::vector<std::string> paths, std::vector<SDL_Rect*> cliprects=STANDARD_CLIPRECTS, std::vector<unsigned int> change_times=STANDARD_CHANGE_TIMES, SDL_Rect* renderrect=nullptr, bool running=true);
+	Animation(Window* w, std::vector<std::string> paths, std::vector<SDL_Rect*> cliprects=STANDARD_CLIPRECTS, std::vector<unsigned int> change_times=STANDARD_CHANGE_TIMES, SDL_Rect* renderrect=nullptr, bool running=true);
 
 	virtual ~Animation();
 
 	//functions, mostly from Texture
 
-	void load(SDL_Window* w, SDL_Renderer* renderer, std::vector<std::string> paths, std::vector<SDL_Rect*> cliprects=STANDARD_CLIPRECTS, std::vector<unsigned int> change_times=STANDARD_CHANGE_TIMES);
+	void load(Window* w, std::vector<std::string> paths, std::vector<SDL_Rect*> cliprects=STANDARD_CLIPRECTS, std::vector<unsigned int> change_times=STANDARD_CHANGE_TIMES);
 
 	int get_width() const;
 	int get_height() const;
@@ -98,8 +102,8 @@ public:
 	void unset_cliprects();
 	void unset_renderrect();
 	//if you change the renderer, this can be updated here
-	void set_renderer(SDL_Renderer*);
-	void set_window(SDL_Window* w);
+	void set_window(Window*);
+	Window const* get_window() const;
 
 	//drawing the animation onto the screen
 	void draw();
@@ -136,14 +140,13 @@ Animation::Animation(){
 }
 
 
-Animation::Animation(SDL_Window* w, SDL_Renderer* renderer, std::vector<std::string> paths, std::vector<SDL_Rect*> cliprects, std::vector<unsigned int> change_times, SDL_Rect* renderrect, bool running){
-	this->renderer = renderer;
+Animation::Animation(Window* window_ptr, std::vector<std::string> paths, std::vector<SDL_Rect*> cliprects, std::vector<unsigned int> change_times, SDL_Rect* renderrect, bool running){
 	this->paths = paths;
 	this->cliprects = cliprects;
 	this->change_times = change_times;
 	this->renderrect = renderrect;
 	this->running = running;
-	this->own_window = w;
+	this->window = window_ptr;
 
 	last_path_ptr = path_ptr+1;
 
@@ -153,17 +156,15 @@ Animation::Animation(SDL_Window* w, SDL_Renderer* renderer, std::vector<std::str
 Animation::~Animation(){
 
 	if (renderrect != nullptr) delete renderrect;
-
 	if (center != nullptr) delete center;
 
 }
 
-void Animation::load(SDL_Window* w, SDL_Renderer* renderer, std::vector<std::string> paths, std::vector<SDL_Rect*> cliprects, std::vector<unsigned int> change_times){
-	this->renderer = renderer;
+void Animation::load(Window* window_ptr, std::vector<std::string> paths, std::vector<SDL_Rect*> cliprects, std::vector<unsigned int> change_times){
 	this->paths = paths;
 	this->cliprects = cliprects;
 	this->change_times = change_times;
-	this->own_window = w;
+	this->window = window_ptr;
 
 	last_path_ptr = path_ptr+1;
 
@@ -172,10 +173,10 @@ void Animation::load(SDL_Window* w, SDL_Renderer* renderer, std::vector<std::str
 
 void Animation::load_texture(){
 	if (last_path_ptr != path_ptr){
-		texture.load(paths[path_ptr], renderer, own_window);
+		texture.load(paths[path_ptr], window);
 		last_path_ptr = path_ptr;
 	}
-	texture.set_cliprect(*(cliprects[cliprect_ptr]));
+	if (cliprects[cliprect_ptr] != nullptr) texture.set_cliprect(*(cliprects[cliprect_ptr]));
 	if(renderrect != nullptr){
 		texture.set_renderrect(*(renderrect));
 	}
@@ -226,15 +227,14 @@ void Animation::unset_renderrect(){
 	texture.unset_renderrect();
 }
 
-void Animation::set_renderer(SDL_Renderer* r){
-	renderer = r;
-	texture.set_renderer(r);
-	texture.load(paths[path_ptr], renderer, own_window);
+
+void Animation::set_window(Window* window_ptr){
+	window = window_ptr;
+	texture.load(paths[path_ptr], window);
 }
 
-void Animation::set_window(SDL_Window* w){
-	own_window = w;
-	texture.load(paths[path_ptr], renderer, own_window);
+Window const* Animation::get_window() const{
+	return window;
 }
 
 void Animation::modulate_color(uint8_t r, uint8_t g, uint8_t b){
