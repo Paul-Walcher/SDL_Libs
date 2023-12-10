@@ -133,6 +133,9 @@ public:
 	void reset_animation();
 	void reset_timer();
 
+	Animation& operator=(Animation&&);
+	Animation& operator=(Animation&);
+
 };
 
 Animation::Animation(){
@@ -358,6 +361,18 @@ void Animation::rotation_config(const SDL_Point& p, const SDL_RendererFlip f){
 	flipType = f;
 
 	texture.rotation_config(p, f);
+}
+
+Animation& Animation::operator=(Animation&& a){
+
+	load(a.window, a.paths, a.cliprects, a.change_times);
+	return (*this);
+}
+
+Animation& Animation::operator=(Animation& a){
+
+	load(a.window, a.paths, a.cliprects, a.change_times);
+	return (*this);
 }
 
 

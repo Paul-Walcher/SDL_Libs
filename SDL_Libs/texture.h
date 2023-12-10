@@ -96,6 +96,9 @@ public:
 	void draw() const;
 	void draw(int x, int y, int w=-1, int h=-1) const;
 
+	Texture& operator=(Texture&&);
+	Texture& operator=(Texture&);
+
 };
 
 Texture::Texture(){
@@ -320,6 +323,18 @@ void Texture::set_as_render_target(SDL_Renderer* r){
 
 void Texture::unset_as_render_target(SDL_Renderer* r){
 	SDL_SetRenderTarget(r, nullptr);
+}
+
+Texture& Texture::operator=(Texture&& t){
+
+	load(t.filepath, t.window);
+	return (*this);
+}
+
+Texture& Texture::operator=(Texture& t){
+
+	load(t.filepath, t.window);
+	return (*this);
 }
 
 #endif
