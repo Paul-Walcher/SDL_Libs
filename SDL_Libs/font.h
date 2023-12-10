@@ -50,6 +50,9 @@ public:
 	void set_color(const SDL_Color& c);
 	void set_font(const std::string& f, int fs=DEFAULT_FONT_SIZE);
 
+	Font& operator=(Font&&);
+	Font& operator=(Font&);
+
 };
 
 
@@ -181,6 +184,18 @@ void Font::set_font(const std::string& path, int fs){
 
 }
 
+Font& operator=(Font&& f){
 
+	load(f.filepath, f.window, f.text, f.color, f.fontsize);
+
+	return (*this);
+}
+
+Font& operator=(Font& f){
+
+	load(f.filepath, f.window, f.text, f.color, f.fontsize);
+
+	return (*this);
+}
 
 #endif
