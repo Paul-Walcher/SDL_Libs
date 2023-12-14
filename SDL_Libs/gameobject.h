@@ -78,20 +78,28 @@ int GameObject2D::W() const {return static_cast<int>(w);}
 int GameObject2D::H() const {return static_cast<int>(h);}
 
 void GameObject2D::changeX(double x_){
-	update_hitboxes(x_ - x, 0);
+	if(update_on_move){
+		update_hitboxes(x_ - x, 0);
+	}
 	x = x_;
 
 }
 void GameObject2D::changeY(double y_){
-	update_hitboxes(y_ - y, 0);
+	if(update_on_move){
+		update_hitboxes(y_ - y, 0);
+	}
 	y = y_;
 }
 void GameObject2D::changeW(double w_){
-	update_hitboxes(0, w_-w);
+	if(update_on_move){
+		update_hitboxes(0, w_-w);
+	}
 	w = w_;
 }
 void GameObject2D::changeH(double h_){
-	update_hitboxes(0, h_-h);
+	if(update_on_move){
+		update_hitboxes(0, h_-h);
+	}
 	h = h_;
 }
 
