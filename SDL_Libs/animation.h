@@ -324,14 +324,17 @@ void Animation::start_animation(){
 
 void Animation::set_path_ptr(const unsigned int pp){
 	if(pp < paths.size()) path_ptr = pp;
+	load_texture();
 }
 
 void Animation::set_cliprect_ptr(const unsigned int cp){
 	if (cp < cliprects.size()) cliprect_ptr = cp;
+	load_texture();
 }	
 
 void Animation::set_change_time_ptr(const unsigned int ctp){
 	if(ctp < change_times.size()) change_time_ptr = ctp;
+	load_texture();
 }
 
 void Animation::reset_animation(){
@@ -339,6 +342,8 @@ void Animation::reset_animation(){
 	path_ptr = 0;
 	cliprect_ptr = 0;
 	change_time_ptr = 0;
+
+	load_texture();
 
 	last_update = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
 
