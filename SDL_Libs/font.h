@@ -53,6 +53,9 @@ public:
 	Font& operator=(Font&&);
 	Font& operator=(Font&);
 
+	Font(const Font&);
+	Font(const Font&&);
+
 };
 
 
@@ -184,18 +187,25 @@ void Font::set_font(const std::string& path, int fs){
 
 }
 
-Font& operator=(Font&& f){
+Font& Font::operator=(Font&& f){
 
 	load(f.filepath, f.window, f.text, f.color, f.fontsize);
 
 	return (*this);
 }
 
-Font& operator=(Font& f){
+Font& Font::operator=(Font& f){
 
 	load(f.filepath, f.window, f.text, f.color, f.fontsize);
 
 	return (*this);
+}
+
+Font::Font(const Font& f){
+	load(f.filepath, f.window, f.text, f.color, f.fontsize);
+}
+Font::Font(const Font&& f){
+	load(f.filepath, f.window, f.text, f.color, f.fontsize);
 }
 
 #endif

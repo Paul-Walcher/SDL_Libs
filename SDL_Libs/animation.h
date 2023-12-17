@@ -135,6 +135,8 @@ public:
 
 	Animation& operator=(Animation&&);
 	Animation& operator=(Animation&);
+	Animation(const Animation&);
+	Animation(const Animation&&);
 
 };
 
@@ -378,6 +380,13 @@ Animation& Animation::operator=(Animation& a){
 
 	load(a.window, a.paths, a.cliprects, a.change_times);
 	return (*this);
+}
+
+Animation::Animation(const Animation& other){
+	load(other.window, other.paths, other.cliprects, other.change_times);
+}
+Animation::Animation(const Animation&& other){
+	load(other.window, other.paths, other.cliprects, other.change_times);
 }
 
 

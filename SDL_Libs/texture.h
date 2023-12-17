@@ -98,6 +98,8 @@ public:
 
 	Texture& operator=(Texture&&);
 	Texture& operator=(Texture&);
+	Texture(const Texture&);
+	Texture(const Texture&&);
 
 };
 
@@ -335,6 +337,13 @@ Texture& Texture::operator=(Texture& t){
 
 	load(t.filepath, t.window);
 	return (*this);
+}
+
+Texture::Texture(const Texture& other){
+	load(other.filepath, other.window);
+}
+Texture::Texture(const Texture&& other){
+	load(other.filepath, other.window);
 }
 
 #endif

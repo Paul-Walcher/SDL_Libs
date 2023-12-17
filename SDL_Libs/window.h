@@ -26,6 +26,8 @@ protected:
 
 	bool mouseFocus=false, keyFocus=false, minimized=false, shown=false, updateCaption=false;
 
+	std::string caption;
+
 public:
 
 	SDL_Window* window = nullptr;
@@ -55,6 +57,10 @@ public:
 
 	void handle(SDL_Event&); //for handling an event
 
+	Window& operator=(const Window&);
+	Window& operator=(const Window&&);
+	Window(const Window&);
+	Window(const Window&&);
 };
 
 Window::Window(){} //undefined, just for specification
@@ -64,7 +70,7 @@ Window::Window(std::string caption, int x, int y, int w, int h, uint32_t flags){
 	this->y = y;
 	this->w = w;
 	this->h = h;
-
+	this->caption = caption;
 	
 
 	window = SDL_CreateWindow(caption.c_str(), x, y, w, h, flags);
@@ -81,7 +87,8 @@ Window::Window(std::string caption, int x, int y, int w, int h, uint32_t flags){
 }
 
 Window::~Window(){
-
+	SDL_DestroyRenderer(renderer);
+	SDL_DestroyWindow(window);
 }
 
 void Window::free(){
@@ -196,5 +203,80 @@ void Window::setCaption(const std::string cap){
 	SDL_SetWindowTitle(window, cap.c_str());
 }
 
+Window& Window::operator=(const Window& other){
+	this->x = other.x;
+	this->y = other.y;
+	this->w = other.w;
+	this->h = other.h;
+	this->caption = other.caption;
+	this->flags = other.flags;
+
+	window = SDL_CreateWindow(caption.c_str(), x, y, w, h, flags);
+	
+	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+	ID = SDL_GetWindowID(window);
+
+	if(flags & SDL_WINDOW_SHOWN) shown = true;
+	else shown = false;
+	return (*this);
+
+}
+
+Window& Window::operator=(const Window&& other){
+	this->x = other.x;
+	this->y = other.y;
+	this->w = other.w;
+	this->h = other.h;
+	this->caption = other.caption;
+	this->flags = other.flags;
+
+	window = SDL_CreateWindow(caption.c_str(), x, y, w, h, flags);
+	
+	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+	ID = SDL_GetWindowID(window);
+
+	if(flags & SDL_WINDOW_SHOWN) shown = true;
+	else shown = false;
+
+	return (*this);
+}
+
+Window::Window(const Window& other){
+	this->x = other.x;
+	this->y = other.y;
+	this->w = other.w;
+	this->h = other.h;
+	this->caption = other.caption;
+	this->flags = other.flags;
+
+	window = SDL_CreateWindow(caption.c_str(), x, y, w, h, flags);
+	
+	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+	ID = SDL_GetWindowID(window);
+
+	if(flags & SDL_WINDOW_SHOWN) shown = true;
+	else shown = false;
+
+	
+}
+
+Window::Window(const Window&& other){
+	this->x = other.x;
+	this->y = other.y;
+	this->w = other.w;
+	this->h = other.h;
+	this->caption = other.caption;
+	this->flags = other.flags;
+
+	window = SDL_CreateWindow(caption.c_str(), x, y, w, h, flags);
+	
+	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+	ID = SDL_GetWindowID(window);
+
+	if(flags & SDL_WINDOW_SHOWN) shown = true;
+	else shown = false;
+
+	
+}
 
 #endif

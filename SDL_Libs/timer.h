@@ -61,6 +61,9 @@ private:
 	bool paused = false;
 	bool finished = false;
 
+	void copy_from(const Timer&);
+	void copy_from(const Timer&&);
+
 	std::thread proc;
 	std::mutex lock;
 
@@ -91,6 +94,11 @@ public:
 
 	const bool is_paused() const;
 
+	Timer& operator=(Timer& other);
+	Timer& operator=(Timer&& other);
+
+	Timer(const Timer&);
+	Timer(const Timer&&);
 
 };
 
@@ -256,6 +264,85 @@ const bool Timer::is_paused() const{
 	return paused;
 }
 
+void Timer::copy_from(const Timer& other){
+	timer_birthday = other.timer_birthday;
+	last_stop = other.last_stop;
+	check_time = other.check_time;
+
+	for(callback_t* ct : callbacks){
+		delete ct;
+	}
+
+	std::vector<callback_t*> n_ct;
+	callbacks = n_ct;
+
+	for(callback_t* ct : other.callbacks){
+
+		callback_t* n = new callback_t;
+		n->f = ct->f;
+		n->frequency = ct->frequency;//plays after the longest time possible
+		n->repetitions = ct->repetitions;
+		n->repeated = ct->repeated;
+		n->input = ct->input;
+		n->last_time_checked = ct->last_time_checked;
+		callbacks.push_back(n);
+
+	}
+
+	paused = other.paused;
+	finished = other.finished;
+
+	
+	proc = std::thread(run_process, this);
+}
+
+void Timer::copy_from(const Timer&& other){
+	timer_birthday = other.timer_birthday;
+	last_stop = other.last_stop;
+	check_time = other.check_time;
+
+	for(callback_t* ct : callbacks){
+		delete ct;
+	}
+
+	std::vector<callback_t*> n_ct;
+	callbacks = n_ct;
+
+	for(callback_t* ct : other.callbacks){
+
+		callback_t* n = new callback_t;
+		n->f = ct->f;
+		n->frequency = ct->frequency;//plays after the longest time possible
+		n->repetitions = ct->repetitions;
+		n->repeated = ct->repeated;
+		n->input = ct->input;
+		n->last_time_checked = ct->last_time_checked;
+		callbacks.push_back(n);
+
+	}
+
+	paused = other.paused;
+	finished = other.finished;
+
+	
+	proc = std::thread(run_process, this);
+}
+
+Timer& Timer::operator=(Timer& other){
+	copy_from(other);	
+	return (*this);
+}
+Timer& Timer::operator=(Timer&& other){
+	copy_from(other);
+	return (*this);
+}
+
+Timer::Timer(const Timer& other){
+	copy_from(other);
+}
+Timer::Timer(const Timer&& other){
+	copy_from(other);
+}
 
 
 #endif

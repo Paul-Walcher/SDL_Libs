@@ -14,7 +14,7 @@ protected:
 	double x=0, y=0;//double for correct positioning
 	double w=0, h=0;//for width and height
 	
-	std::vector<Hitbox*>* hitboxes = new std::vector<Hitbox*>;//pointer to hitboxes
+	std::vector<Hitbox*> hitboxes;//pointer to hitboxes
 
 	bool update_on_move = true;
 
@@ -47,14 +47,18 @@ public:
 
 	Hitbox* add_hitbox(int x, int y, int wr=0, int h=0, HitboxType ht = HitboxType::RECTANGULAR);//wr stands for width and radius, for both
 	void remove_hitbox(Hitbox*);
-	void set_hitboxes(std::vector<Hitbox*>*);//sets all given hitboxes to the new pointer
+	void set_hitboxes(std::vector<Hitbox*>);//sets all given hitboxes to the new pointer
 	std::vector<Hitbox*>* get_hitboxes();
 
 	void update_hitboxes(int xdelta=0, int ydelta=0, int wdelta=0, int hdelta=0);// updates all hitboxes accordingly, for circular hitboxes wdelta is radius change
 
 	GameObject2D(double, double, double, double, wrap_f_t draw, bool update=true);//for initialization
+	GameObject2D(const GameObject2D&);
+	GameObject2D(const GameObject2D&&);
 	virtual ~GameObject2D();
 
+	GameObject2D& operator=(GameObject2D&& other);
+	GameObject2D& operator=(GameObject2D& other);
 
 };
 
@@ -62,8 +66,7 @@ public:
 GameObject2D::GameObject2D(double x_, double y_, double w_, double h_, wrap_f_t draw, bool update): x(x_), y(y_), w(w_), h(h_), draw_f(draw), update_on_move(update){}
 GameObject2D::~GameObject2D(){
 
-	for(Hitbox* ht : (*hitboxes)) delete ht;
-	delete hitboxes;
+	for(Hitbox* ht : (hitboxes)) delete ht;
 
 }
 
@@ -106,9 +109,9 @@ void GameObject2D::changeH(double h_){
 
 bool GameObject2D::hits(GameObject2D* other){
 	
-	for(Hitbox* h : (*hitboxes)){
+	for(Hitbox* h : (hitboxes)){
 
-		for(Hitbox* oh : (*(other->hitboxes))){
+		for(Hitbox* oh : ((other->hitboxes))){
 
 			if (h->hits(oh)) return true;
 		}
@@ -119,34 +122,30 @@ bool GameObject2D::hits(GameObject2D* other){
 
 }
 
-void GameObject2D::set_hitboxes(std::vector<Hitbox*>* ht){
-	if (hitboxes != nullptr){
-		for (Hitbox* h : (*hitboxes)) delete h;
-		delete hitboxes;
-	}
+void GameObject2D::set_hitboxes(std::vector<Hitbox*> ht){
+	
+	for (Hitbox* h : (hitboxes)) delete h;
 	hitboxes = ht;
 }
 
 std::vector<Hitbox*>* GameObject2D::get_hitboxes(){
-	return hitboxes;
+	return &hitboxes;
 }
 
 Hitbox* GameObject2D::add_hitbox(int x, int y, int wr, int h, HitboxType ht){
 
 
-	if (hitboxes == nullptr) return nullptr;
-
 	switch (ht){
 
 		case HitboxType::RECTANGULAR: 	{
 											RectangularHitbox* rh = new RectangularHitbox(x, y, wr, h);
-											hitboxes->push_back(dynamic_cast<Hitbox*>(rh));
+											hitboxes.push_back(dynamic_cast<Hitbox*>(rh));
 											return dynamic_cast<Hitbox*>(rh);
 											break;
 										}	  
 		case HitboxType::CIRCULAR:		{
 											CircularHitbox* ch = new CircularHitbox(x, y, wr);
-											hitboxes->push_back(dynamic_cast<Hitbox*>(ch));
+											hitboxes.push_back(dynamic_cast<Hitbox*>(ch));
 											return dynamic_cast<Hitbox*>(ch);
 											break;
 										}
@@ -158,18 +157,17 @@ Hitbox* GameObject2D::add_hitbox(int x, int y, int wr, int h, HitboxType ht){
 }
 
 void GameObject2D::remove_hitbox(Hitbox* hb){
-	if(hitboxes != nullptr){
-		std::vector<Hitbox*>::iterator it = hitboxes->begin();
-		while (it != hitboxes->end() && (*it) != hb){
-			it++;
-		}
-		if (it != hitboxes->end()) hitboxes->erase(it);
+	std::vector<Hitbox*>::iterator it = hitboxes.begin();
+	while (it != hitboxes.end() && (*it) != hb){
+		it++;
 	}
+	if (it != hitboxes.end()) hitboxes.erase(it);
+
 }
 
 void GameObject2D::update_hitboxes(int xdelta, int ydelta, int wdelta, int hdelta){
 
-	for(Hitbox* h : (*hitboxes)){
+	for(Hitbox* h : (hitboxes)){
 
 		switch(h->type){
 
@@ -203,5 +201,108 @@ void GameObject2D::set_draw_f(wrap_f_t f){
 	draw_f = f;
 }
 
+GameObject2D::GameObject2D(const GameObject2D& other){
+	x = other.x;
+	y = other.y;
+	w = other.w;
+	h = other.h;
+	draw_f = other.draw_f;
+
+	for(Hitbox* h : hitboxes) delete h;
+	std::vector<Hitbox*> empty;
+	hitboxes = empty;
+
+	for(Hitbox* h : other.hitboxes){
+		if (h->type == HitboxType::RECTANGULAR){
+			RectangularHitbox* hr = dynamic_cast<RectangularHitbox*>(h);
+			add_hitbox(hr->x, hr->y, hr->w, hr->h, HitboxType::RECTANGULAR);
+		}
+		else if(h->type == HitboxType::CIRCULAR){
+			CircularHitbox *cr = dynamic_cast<CircularHitbox*>(h);
+			add_hitbox(cr->x, cr->y, cr->r, 0, HitboxType::CIRCULAR);
+
+		}
+	}
+
+}
+
+GameObject2D::GameObject2D(const GameObject2D&& other){
+	x = other.x;
+	y = other.y;
+	w = other.w;
+	h = other.h;
+	draw_f = other.draw_f;
+
+	for(Hitbox* h : hitboxes) delete h;
+	std::vector<Hitbox*> empty;
+	hitboxes = empty;
+
+	for(Hitbox* h : other.hitboxes){
+		if (h->type == HitboxType::RECTANGULAR){
+			RectangularHitbox* hr = dynamic_cast<RectangularHitbox*>(h);
+			add_hitbox(hr->x, hr->y, hr->w, hr->h, HitboxType::RECTANGULAR);
+		}
+		else if(h->type == HitboxType::CIRCULAR){
+			CircularHitbox *cr = dynamic_cast<CircularHitbox*>(h);
+			add_hitbox(cr->x, cr->y, cr->r, 0, HitboxType::CIRCULAR);
+
+		}
+	}
+
+}
+
+GameObject2D& GameObject2D::operator=(GameObject2D&& other){
+
+	x = other.x;
+	y = other.y;
+	w = other.w;
+	h = other.h;
+	draw_f = other.draw_f;
+
+	for(Hitbox* h : hitboxes) delete h;
+	std::vector<Hitbox*> empty;
+	hitboxes = empty;
+
+	for(Hitbox* h : other.hitboxes){
+		if (h->type == HitboxType::RECTANGULAR){
+			RectangularHitbox* hr = dynamic_cast<RectangularHitbox*>(h);
+			add_hitbox(hr->x, hr->y, hr->w, hr->h, HitboxType::RECTANGULAR);
+		}
+		else if(h->type == HitboxType::CIRCULAR){
+			CircularHitbox *cr = dynamic_cast<CircularHitbox*>(h);
+			add_hitbox(cr->x, cr->y, cr->r, 0, HitboxType::CIRCULAR);
+
+		}
+	}
+	return (*this);
+
+}
+
+GameObject2D& GameObject2D::operator=(GameObject2D& other){
+
+	x = other.x;
+	y = other.y;
+	w = other.w;
+	h = other.h;
+	draw_f = other.draw_f;
+
+	for(Hitbox* h : hitboxes) delete h;
+	std::vector<Hitbox*> empty;
+	hitboxes = empty;
+
+	for(Hitbox* h : other.hitboxes){
+		if (h->type == HitboxType::RECTANGULAR){
+			RectangularHitbox* hr = dynamic_cast<RectangularHitbox*>(h);
+			add_hitbox(hr->x, hr->y, hr->w, hr->h, HitboxType::RECTANGULAR);
+		}
+		else if(h->type == HitboxType::CIRCULAR){
+			CircularHitbox *cr = dynamic_cast<CircularHitbox*>(h);
+			add_hitbox(cr->x, cr->y, cr->r, 0, HitboxType::CIRCULAR);
+
+		}
+	}
+	return (*this);
+
+}
 
 #endif
