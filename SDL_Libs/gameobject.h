@@ -183,7 +183,7 @@ void GameObject2D::update_hitboxes(int xdelta, int ydelta, int wdelta, int hdelt
 											CircularHitbox* ch = dynamic_cast<CircularHitbox*>(h);
 											ch->x += xdelta;
 											ch->y += ydelta;
-											ch->r += wdelta;
+											ch->r += (wdelta >> 1);
 											break;
 											}
 		}
